@@ -1,23 +1,19 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: Lenovo
-  Date: 19/04/2026
-  Time: 16:30
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:if test="${empty sessionScope.user_name}">
+    <c:redirect url="auth/login.jsp"/>
+</c:if>
 <html>
 <head>
     <title>Main</title>
 </head>
 <body>
-    <p>Hello(forward) ${user}</p>
-    <br/>
-    <p>Hi(redirect/forward) ${user_name}</p>
-    <br/>
-    <form action="controller">
-        <input type="hidden" name="command" value="logout">
-        <input type="submit" value="logOut">
-    </form>
+<h2>Welcome, ${sessionScope.user_name}!</h2>
+<ul>
+    <li><a href="${pageContext.request.contextPath}/controller?command=SHOW_ALL_USERS">Manage Users</a></li>
+    <li><a href="${pageContext.request.contextPath}/controller?command=SHOW_ALL_GROUPS">Manage Groups</a></li>
+    <li><a href="${pageContext.request.contextPath}/controller?command=SHOW_ALL_STUDENTS">Manage Students</a></li>
+</ul>
+<p><a href="${pageContext.request.contextPath}/controller?command=LOGOUT">Log out</a></p>
 </body>
 </html>

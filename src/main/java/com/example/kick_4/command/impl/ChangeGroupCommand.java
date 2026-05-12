@@ -1,10 +1,10 @@
 package com.example.kick_4.command.impl;
 
 import com.example.kick_4.command.Command;
-import com.example.kick_4.dao.impl.GroupDaoImpl;
 import com.example.kick_4.entity.Group;
 import com.example.kick_4.exception.CommandException;
-import com.example.kick_4.exception.DaoException;
+import com.example.kick_4.exception.ServiceException;
+import com.example.kick_4.service.impl.GroupServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 
 public class ChangeGroupCommand implements Command {
@@ -13,20 +13,18 @@ public class ChangeGroupCommand implements Command {
     String idStr = request.getParameter("groupId");
     String newName = request.getParameter("groupName");
 
-    if (idStr == null || newName == null || newName.isBlank()) {
-      request.setAttribute("errorMsg", "Group ID and new name are required");
-      return "pages/editGroup.jsp";
-    }
-
     try {
       Long id = Long.parseLong(idStr);
       Group group = new Group();
       group.setId(id);
       group.setName(newName);
-      GroupDaoImpl.getInstance().update(group);
+      GroupServiceImpl.getInstance().update(group);
       request.setAttribute("successMsg", "Group updated successfully");
-      return new ShowAllGroupsCommand().execute(request);
-    } catch (NumberFormatException | DaoException e) {
+      return "redirect:controller?command=SHOW_ALL_GROUPS";
+    } catch (NumberFormatException e) {
+      request.setAttribute("errorMsg", "Invalid group ID format");
+      return "pages/group/editGroup.jsp";
+    } catch (ServiceException e) {
       throw new CommandException("Failed to update group", e);
     }
   }

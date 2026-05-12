@@ -23,7 +23,7 @@ public class LoginCommand implements Command {
         page = "pages/main.jsp";
       } else {
         request.setAttribute("login_msg", "Incorrect login or password");
-        page = "index.jsp";
+        page = "pages/auth/login.jsp";
       }
       session.setAttribute("current_page", page);
     } catch (ServiceException e) {

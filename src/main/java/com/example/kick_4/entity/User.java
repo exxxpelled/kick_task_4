@@ -1,6 +1,7 @@
 package com.example.kick_4.entity;
 
 public class User extends AbstractEntity {
+  public static final int MIN_PASSWORD_LENGTH = 6;
   private String login;
   private String password;
 

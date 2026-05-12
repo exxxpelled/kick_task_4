@@ -1,10 +1,10 @@
 package com.example.kick_4.command.impl;
 
 import com.example.kick_4.command.Command;
-import com.example.kick_4.dao.impl.StudentDaoImpl;
 import com.example.kick_4.entity.Student;
 import com.example.kick_4.exception.CommandException;
-import com.example.kick_4.exception.DaoException;
+import com.example.kick_4.exception.ServiceException;
+import com.example.kick_4.service.impl.StudentServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 
 public class ChangeStudentCommand implements Command {
@@ -15,11 +15,6 @@ public class ChangeStudentCommand implements Command {
     String surname = request.getParameter("surname");
     String groupIdStr = request.getParameter("groupId");
 
-    if (idStr == null || name == null || surname == null || groupIdStr == null) {
-      request.setAttribute("errorMsg", "All fields are required");
-      return "pages/editStudent.jsp";
-    }
-
     try {
       Long id = Long.parseLong(idStr);
       int groupId = Integer.parseInt(groupIdStr);
@@ -28,10 +23,13 @@ public class ChangeStudentCommand implements Command {
       student.setName(name);
       student.setSurname(surname);
       student.setGroupId(groupId);
-      StudentDaoImpl.getInstance().update(student);
+      StudentServiceImpl.getInstance().update(student);
       request.setAttribute("successMsg", "Student updated successfully");
-      return new ShowAllStudentsCommand().execute(request);
-    } catch (NumberFormatException | DaoException e) {
+      return "redirect:controller?command=SHOW_ALL_STUDENTS";
+    } catch (NumberFormatException e) {
+      request.setAttribute("errorMsg", "Invalid number format for ID or group");
+      return "pages/student/editStudent.jsp";
+    } catch (ServiceException e) {
       throw new CommandException("Failed to update student", e);
     }
   }
