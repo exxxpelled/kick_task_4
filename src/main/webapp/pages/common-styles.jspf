@@ -1,0 +1,106 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        background: #f4f5f7;
+        color: #222;
+    }
+
+    /* --- Navigation --- */
+    nav {
+        background: #1a1a2e;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        height: 48px;
+        gap: 4px;
+    }
+    nav .brand {
+        font-size: 15px;
+        font-weight: bold;
+        color: #fff;
+        margin-right: auto;
+        letter-spacing: .5px;
+    }
+    nav a {
+        color: #ccc;
+        text-decoration: none;
+        padding: 6px 12px;
+        border-radius: 3px;
+        font-size: 13px;
+    }
+    nav a:hover { background: #2a2a4a; color: #fff; }
+
+    /* --- Layout --- */
+    .container { max-width: 960px; margin: 32px auto; padding: 0 16px; }
+
+    .card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 24px;
+    }
+
+    h2 { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #111; }
+
+    /* --- Table --- */
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f9f9f9; font-weight: bold; color: #444; font-size: 13px; }
+    tbody tr:hover td { background: #fafafa; }
+
+    /* --- Buttons --- */
+    .btn {
+        display: inline-block;
+        padding: 6px 14px;
+        font-size: 13px;
+        border: 1px solid transparent;
+        border-radius: 3px;
+        cursor: pointer;
+        text-decoration: none;
+        line-height: 1.5;
+        background: none;
+    }
+    .btn-primary  { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+    .btn-primary:hover  { background: #2a2a4a; border-color: #2a2a4a; }
+    .btn-danger   { background: #c0392b; color: #fff; border-color: #c0392b; }
+    .btn-danger:hover   { background: #a93226; border-color: #a93226; }
+    .btn-warning  { background: #d68910; color: #fff; border-color: #d68910; }
+    .btn-warning:hover  { background: #b9770e; border-color: #b9770e; }
+    .btn-success  { background: #1e8449; color: #fff; border-color: #1e8449; }
+    .btn-success:hover  { background: #196f3d; border-color: #196f3d; }
+
+    /* --- Forms --- */
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; margin-bottom: 4px; font-weight: bold; color: #333; }
+    .form-group input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        font-size: 14px;
+        background: #fff;
+    }
+    .form-group input:focus { outline: none; border-color: #1a1a2e; }
+    .form-hint { font-size: 12px; color: #888; margin-top: 3px; }
+
+    /* --- Alerts --- */
+    .alert {
+        padding: 10px 14px;
+        border-radius: 3px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        border: 1px solid transparent;
+    }
+    .alert-success { background: #eafaf1; color: #1e8449; border-color: #a9dfbf; }
+    .alert-danger  { background: #fdedec; color: #c0392b; border-color: #f1948a; }
+
+    /* --- Misc --- */
+    .actions { display: flex; gap: 6px; align-items: center; }
+    .text-muted { color: #888; }
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+</style>

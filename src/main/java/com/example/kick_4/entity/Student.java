@@ -2,8 +2,8 @@ package com.example.kick_4.entity;
 
 public class Student extends AbstractEntity {
   private String name;
-  private String Surname;
-  private int groupId;
+  private String surname;
+  private int groupNumber;
 
   public String getName() {
     return name;
@@ -14,18 +14,18 @@ public class Student extends AbstractEntity {
   }
 
   public String getSurname() {
-    return Surname;
+    return surname;
   }
 
   public void setSurname(String surname) {
-    Surname = surname;
+    this.surname = surname;
   }
 
-  public int getGroupId() {
-    return groupId;
+  public int getGroupNumber() {
+    return groupNumber;
   }
 
-  public void setGroupId(int groupId) {
-    this.groupId = groupId;
+  public void setGroupNumber(int groupId) {
+    this.groupNumber = groupId;
   }
 }

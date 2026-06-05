@@ -1,50 +1,58 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="com.example.kick_4.dao.impl.StudentDaoImpl, com.example.kick_4.entity.Student, java.util.List" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:if test="${empty sessionScope.user_name}">
-    <c:redirect url="../auth/login.jsp"/>
-</c:if>
-<%
-    String studentIdParam = request.getParameter("studentId");
-    Student student = null;
-    if (studentIdParam != null && !studentIdParam.isBlank()) {
-        try {
-            long id = Long.parseLong(studentIdParam);
-            List<Student> all = StudentDaoImpl.getInstance().findAll();
-            for (Student s : all) {
-                if (s.getId() == id) {
-                    student = s;
-                    break;
-                }
-            }
-        } catch (Exception e) {}
-    }
-    if (student == null && request.getAttribute("javax.servlet.forward.request_uri") == null) {
-        response.sendRedirect(request.getContextPath() + "/controller?command=SHOW_ALL_STUDENTS");
-        return;
-    }
-    request.setAttribute("editStudent", student);
-%>
+<!DOCTYPE html>
 <html>
 <head>
-    <title>Edit student</title>
+    <meta charset="UTF-8">
+    <title>Edit Student</title>
+    <%@ include file="/pages/common-styles.jspf" %>
 </head>
 <body>
-<h2>Edit student</h2>
-<p style="color:red;">${errorMsg}</p>
-<c:if test="${not empty editStudent}">
-    <form action="${pageContext.request.contextPath}/controller" method="post">
-        <input type="hidden" name="command" value="CHANGE_STUDENT"/>
-        <input type="hidden" name="studentId" value="${editStudent.id}"/>
-        <label>Name: <input type="text" name="name" value="${editStudent.name}" required/></label><br/>
-        <label>Surname: <input type="text" name="surname" value="${editStudent.surname}" required/></label><br/>
-        <label>Group ID: <input type="number" name="groupId" value="${editStudent.groupId}" required/></label><br/>
-        <input type="submit" value="Update student"/>
-    </form>
-</c:if>
-<c:if test="${empty editStudent}">
-    <p>Student not found.</p>
-</c:if>
-<p><a href="${pageContext.request.contextPath}/controller?command=SHOW_ALL_STUDENTS">Back to students</a></p>
+
+<nav>
+    <span class="brand">Student Manager</span>
+    <a href="${pageContext.request.contextPath}/controller?command=show_all_students">Students</a>
+    <a href="${pageContext.request.contextPath}/controller?command=show_all_users">Users</a>
+    <a href="${pageContext.request.contextPath}/controller?command=logout">Logout</a>
+</nav>
+
+<div class="container" style="max-width:480px;">
+    <div class="card">
+        <h2>Edit Student</h2>
+
+        <% String errorMsg = (String) request.getAttribute("errorMsg"); %>
+        <% if (errorMsg != null) { %><div class="alert alert-danger"><%= errorMsg %></div><% } %>
+
+        <%
+            String studentId = request.getParameter("studentId");
+            String name      = request.getParameter("name");
+            String surname   = request.getParameter("surname");
+            String groupId   = request.getParameter("groupId");
+        %>
+
+        <form action="${pageContext.request.contextPath}/controller" method="post">
+            <input type="hidden" name="command" value="change_student"/>
+            <input type="hidden" name="studentId" value="<%= studentId %>"/>
+
+            <div class="form-group">
+                <label>First Name</label>
+                <input type="text" name="name" value="<%= name != null ? name : "" %>" required/>
+            </div>
+            <div class="form-group">
+                <label>Surname</label>
+                <input type="text" name="surname" value="<%= surname != null ? surname : "" %>" required/>
+            </div>
+            <div class="form-group">
+                <label>Group Number</label>
+                <input type="number" name="groupId" value="<%= groupId != null ? groupId : "" %>" min="1" required/>
+            </div>
+
+            <div class="actions mt-16">
+                <button type="submit" class="btn btn-warning">Update</button>
+                <a href="${pageContext.request.contextPath}/controller?command=show_all_students" class="btn btn-primary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
 </body>
 </html>

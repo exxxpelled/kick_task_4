@@ -5,16 +5,12 @@ import com.example.kick_4.command.impl.*;
 public enum CommandType {
   LOGIN(new LoginCommand()),
   LOGOUT(new LogoutCommand()),
+  REGISTER(new RegisterCommand()),
 
   ADD_USER(new AddUserCommand()),
   DELETE_USER(new DeleteUserCommand()),
   CHANGE_USER(new ChangeUserCommand()),
   SHOW_ALL_USERS(new ShowAllUsersCommand()),
-
-  ADD_GROUP(new AddGroupCommand()),
-  DELETE_GROUP(new DeleteGroupCommand()),
-  CHANGE_GROUP(new ChangeGroupCommand()),
-  SHOW_ALL_GROUPS(new ShowAllGroupsCommand()),
 
   ADD_STUDENT(new AddStudentCommand()),
   CHANGE_STUDENT(new ChangeStudentCommand()),
@@ -23,16 +19,18 @@ public enum CommandType {
 
   DEFAULT(new DefaultCommand());
 
-  private Command command;
+  private final Command command;
 
   CommandType(Command command) {
     this.command = command;
   }
 
   public static Command defineCommand(String commandStr) {
+    if (commandStr == null || commandStr.isBlank()) {
+      return DEFAULT.command;
+    }
     try {
-      CommandType current = CommandType.valueOf(commandStr.toUpperCase());
-      return current.command;
+      return CommandType.valueOf(commandStr.toUpperCase()).command;
     } catch (IllegalArgumentException e) {
       return DEFAULT.command;
     }

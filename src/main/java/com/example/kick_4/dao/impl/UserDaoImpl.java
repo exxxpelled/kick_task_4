@@ -13,45 +13,54 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class UserDaoImpl implements BaseDao<User>, UserDao {
+
   private static final Logger logger = LogManager.getLogger(UserDaoImpl.class);
   private static final UserDaoImpl INSTANCE = new UserDaoImpl();
   private static final UserMapper MAPPER = new UserMapper();
 
-  private static final String USER_ID_COLUMN = "id";
-  private static final String USER_LOGIN_COLUMN = "login";
-  private static final String USER_PASSWORD_COLUMN = "password";
+  private static final String COL_ID = "id";
+  private static final String COL_LOGIN = "login";
+  private static final String COL_PASSWORD = "password";
+  private static final String COL_ROLE = "role";
 
-  private static final String SQL_INSERT_USER = """
-          INSERT INTO users (%s, %s)
-          VALUES (?, ?)
-          """.formatted(USER_LOGIN_COLUMN, USER_PASSWORD_COLUMN);
+  private static final String SQL_INSERT = """
+          INSERT INTO users (login, password, role)
+          VALUES (?, ?, ?::user_role)
+          """;
 
-  private static final String SQL_DELETE_USER = """
-          DELETE FROM users 
-          WHERE %s = ?
-          """.formatted(USER_ID_COLUMN);
+  private static final String SQL_DELETE = """
+          DELETE FROM users
+          WHERE id = ?
+          """;
 
-  private static final String SQL_SELECT_ALL_USERS = """
-          SELECT %s, %s, %s
+  private static final String SQL_SELECT_ALL = """
+          SELECT id, login, password, role
           FROM users
-          """.formatted(USER_ID_COLUMN, USER_LOGIN_COLUMN, USER_PASSWORD_COLUMN);
+          ORDER BY id
+          """;
 
-  private static final String SQL_UPDATE_USER = """
+  private static final String SQL_SELECT_BY_LOGIN = """
+          SELECT id, login, password, role
+          FROM users
+          WHERE login = ?
+          """;
+
+  private static final String SQL_UPDATE = """
           UPDATE users
-          SET %s = ?, %s = ? 
-          WHERE %s = ?
-          """.formatted(USER_LOGIN_COLUMN, USER_PASSWORD_COLUMN, USER_ID_COLUMN);
+          SET login = ?, password = ?, role = ?::user_role
+          WHERE id = ?
+          """;
 
-  private static final String SQL_SELECT_PASSWORD_WHERE_LOGIN = """
-          SELECT %s
-          FROM users 
-          WHERE %s = ?
-          """.formatted(USER_PASSWORD_COLUMN, USER_LOGIN_COLUMN);
+  private static final String SQL_UPDATE_WITHOUT_PASSWORD = """
+          UPDATE users
+          SET login = ?, role = ?::user_role
+          WHERE id = ?
+          """;
 
   private UserDaoImpl() {
   }
@@ -62,69 +71,66 @@ public class UserDaoImpl implements BaseDao<User>, UserDao {
 
   @Override
   public boolean insert(User user) throws DaoException {
-    logger.debug("Creating user with login: {}", user.getLogin());
+    logger.debug("Inserting user: {}", user.getLogin());
+    try (Connection conn = ConnectionPool.getInstance().getConnection();
+         PreparedStatement ps = conn.prepareStatement(SQL_INSERT)) {
 
-    try (Connection connection = ConnectionPool.getInstance().getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(SQL_INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
+      ps.setString(1, user.getLogin());
+      ps.setString(2, user.getPassword());
+      ps.setString(3, user.getRole().name());
 
-      preparedStatement.setString(1, user.getLogin());
-      preparedStatement.setString(2, user.getPassword());
-
-      int affectedRows = preparedStatement.executeUpdate();
-      boolean inserted = affectedRows > 0;
-
-      if (inserted) {
-        try (ResultSet keys = preparedStatement.getGeneratedKeys()) {
-          if (keys.next()) {
-            user.setId(keys.getLong(1));
-            logger.debug("User created with id: {}", user.getId());
-          }
-        }
-      }
-      return inserted;
+      return ps.executeUpdate() > 0;
     } catch (SQLException e) {
-      logger.error("Error creating user: {}. {}", user.getLogin(), e);
+      logger.error("Error inserting user: {}", user.getLogin(), e);
       throw new DaoException("Database error while creating user", e);
     }
   }
 
   @Override
   public boolean delete(User user) throws DaoException {
-    logger.debug("Deleting user with id: {}", user.getId());
-    try (Connection connection = ConnectionPool.getInstance().getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(SQL_DELETE_USER)) {
+    logger.debug("Deleting user id: {}", user.getId());
+    try (Connection conn = ConnectionPool.getInstance().getConnection();
+         PreparedStatement ps = conn.prepareStatement(SQL_DELETE)) {
 
-      preparedStatement.setLong(1, user.getId());
-      int affectedRows = preparedStatement.executeUpdate();
-      boolean deleted = affectedRows > 0;
-
-      logger.debug("User deletion completed, affected rows: {}", affectedRows);
-      return deleted;
+      ps.setLong(1, user.getId());
+      int rows = ps.executeUpdate();
+      logger.debug("Deleted {} row(s) for user id: {}", rows, user.getId());
+      return rows > 0;
     } catch (SQLException e) {
-      logger.error("Error deleting user with id: {}", user.getId(), e);
+      logger.error("Error deleting user id: {}", user.getId(), e);
       throw new DaoException("Database error while deleting user", e);
     }
   }
 
   @Override
   public User update(User user) throws DaoException {
-    logger.debug("Updating user with id: {}", user.getId());
-    try (Connection connection = ConnectionPool.getInstance().getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(SQL_UPDATE_USER)) {
+    logger.debug("Updating user id: {}", user.getId());
 
-      preparedStatement.setString(1, user.getLogin());
-      preparedStatement.setString(2, user.getPassword());
-      preparedStatement.setLong(3, user.getId());
+    boolean changePassword = user.getPassword() != null && !user.getPassword().isBlank();
+    String sql = changePassword ? SQL_UPDATE : SQL_UPDATE_WITHOUT_PASSWORD;
 
-      int affectedRows = preparedStatement.executeUpdate();
-      if (affectedRows == 0) {
-        logger.warn("No user found with id {} for update", user.getId());
-        throw new DaoException("Update failed – user not found");
+    try (Connection conn = ConnectionPool.getInstance().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+      if (changePassword) {
+        ps.setString(1, user.getLogin());
+        ps.setString(2, user.getPassword());
+        ps.setString(3, user.getRole().name());
+        ps.setLong(4, user.getId());
+      } else {
+        ps.setString(1, user.getLogin());
+        ps.setString(2, user.getRole().name());
+        ps.setLong(3, user.getId());
       }
-      logger.debug("User updated successfully, affected rows: {}", affectedRows);
+
+      int rows = ps.executeUpdate();
+      if (rows == 0) {
+        throw new DaoException("Update failed — user not found with id: " + user.getId());
+      }
+      logger.debug("User id {} updated successfully", user.getId());
       return user;
     } catch (SQLException e) {
-      logger.error("Error updating user with id: {}", user.getId(), e);
+      logger.error("Error updating user id: {}", user.getId(), e);
       throw new DaoException("Database error while updating user", e);
     }
   }
@@ -133,12 +139,12 @@ public class UserDaoImpl implements BaseDao<User>, UserDao {
   public List<User> findAll() throws DaoException {
     logger.debug("Fetching all users");
     List<User> users = new ArrayList<>();
-    try (Connection connection = ConnectionPool.getInstance().getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(SQL_SELECT_ALL_USERS);
-         ResultSet resultSet = preparedStatement.executeQuery()) {
+    try (Connection conn = ConnectionPool.getInstance().getConnection();
+         PreparedStatement ps = conn.prepareStatement(SQL_SELECT_ALL);
+         ResultSet rs = ps.executeQuery()) {
 
-      while (resultSet.next()) {
-        users.add(MAPPER.map(resultSet));
+      while (rs.next()) {
+        users.add(MAPPER.map(rs));
       }
       logger.debug("Fetched {} users", users.size());
       return users;
@@ -149,34 +155,28 @@ public class UserDaoImpl implements BaseDao<User>, UserDao {
   }
 
   @Override
-  public String findPasswordHashByLogin(String login) throws DaoException {
-    logger.debug("Fetching password for login: {}", login);
+  public Optional<User> findByLogin(String login) throws DaoException {
+    logger.debug("Looking up user by login: {}", login);
+    try (Connection conn = ConnectionPool.getInstance().getConnection();
+         PreparedStatement ps = conn.prepareStatement(SQL_SELECT_BY_LOGIN)) {
 
-    try (Connection connection = ConnectionPool.getInstance().getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(SQL_SELECT_PASSWORD_WHERE_LOGIN)) {
-
-      preparedStatement.setString(1, login);
-      try (ResultSet resultSet = preparedStatement.executeQuery()) {
-        if (resultSet.next()) {
-          return resultSet.getString(USER_PASSWORD_COLUMN);
+      ps.setString(1, login);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return Optional.of(MAPPER.map(rs));
         }
-        return null;
+        return Optional.empty();
       }
     } catch (SQLException e) {
-      logger.error("Error fetching password for login: {}", login, e);
-      throw new DaoException("Database error while fetching password", e);
+      logger.error("Error fetching user by login: {}", login, e);
+      throw new DaoException("Database error while fetching user", e);
     }
   }
 
   @Override
   public boolean authenticate(String login, String password) throws DaoException {
-    logger.debug("Authenticating user with plain password comparison: {}", login);
-
-    String storedPassword = findPasswordHashByLogin(login);
-    if (storedPassword == null) {
-      return false;
-    }
-
-    return storedPassword.equals(password);
+    return findByLogin(login)
+            .map(user -> user.getPassword().equals(password))
+            .orElse(false);
   }
 }

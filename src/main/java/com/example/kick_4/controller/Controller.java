@@ -1,9 +1,8 @@
 package com.example.kick_4.controller;
 
-import java.io.*;
-
 import com.example.kick_4.command.Command;
 import com.example.kick_4.command.CommandType;
+import com.example.kick_4.command.Router;
 import com.example.kick_4.exception.CommandException;
 import com.example.kick_4.pool.ConnectionPool;
 import jakarta.servlet.ServletException;
@@ -12,9 +11,17 @@ import jakarta.servlet.annotation.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@WebServlet(name = "helloServlet", urlPatterns = {"/controller", "*.do"})
+import java.io.IOException;
+
+@WebServlet(name = "controller", urlPatterns = {"/controller", "*.do"})
 public class Controller extends HttpServlet {
+
   private static final Logger logger = LogManager.getLogger(Controller.class);
+
+  private static final String PAGE_ERROR_400 = "/pages/error/400.jsp";
+  private static final String PAGE_ERROR_500 = "/pages/error/500.jsp";
+
+  private static final String ATTR_ERROR_MSG = "errorMsg";
 
   @Override
   public void init() {
@@ -29,8 +36,9 @@ public class Controller extends HttpServlet {
   }
 
   @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-    processRequest(req, resp);
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+          throws IOException, ServletException {
+    processRequest(request, response);
   }
 
   private void processRequest(HttpServletRequest request, HttpServletResponse response)
@@ -38,27 +46,34 @@ public class Controller extends HttpServlet {
     response.setContentType("text/html;charset=UTF-8");
 
     String commandStr = request.getParameter("command");
-    Command command = CommandType.defineCommand(commandStr);
 
-    if (command == null) {
-      response.sendError(400, "Unknown command");
+    if (commandStr != null && commandStr.isBlank()) {
+      response.sendError(400, "Missing command parameter");
       return;
     }
 
-    try {
-      String result = command.execute(request);
+    Command command = CommandType.defineCommand(commandStr);
 
-      if (result != null && result.startsWith("redirect:")) {
-        response.sendRedirect(result.substring("redirect:".length()));
-      } else if (result != null) {
-        request.getRequestDispatcher(result).forward(request, response);
-      } else {
-        response.sendError(500, "Command returned null view");
+    try {
+      Router router = command.execute(request);
+
+      if (router == null) {
+        logger.error("Command '{}' returned null router", commandStr);
+        request.setAttribute(ATTR_ERROR_MSG, "Command returned no result");
+        request.getRequestDispatcher(PAGE_ERROR_500).forward(request, response);
+        return;
       }
+
+      if (router.getType() == Router.Type.REDIRECT) {
+        response.sendRedirect(request.getContextPath() + "/" + router.getPage());
+      } else {
+        request.getRequestDispatcher(router.getPage()).forward(request, response);
+      }
+
     } catch (CommandException e) {
-      logger.error("Command execution failed", e);
-      request.setAttribute("errorMsg", e.getMessage());
-      request.getRequestDispatcher("pages/error.jsp").forward(request, response);
+      logger.error("Command '{}' execution failed: {}", commandStr, e.getMessage(), e);
+      request.setAttribute(ATTR_ERROR_MSG, e.getMessage());
+      request.getRequestDispatcher(PAGE_ERROR_500).forward(request, response);
     }
   }
 

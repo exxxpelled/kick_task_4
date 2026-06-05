@@ -4,9 +4,12 @@ public class Router {
   private String page;
   private Type type = Type.FORWARD;
 
-  enum Type{
+  public enum Type {
     FORWARD,
     REDIRECT
+  }
+
+  public Router() {
   }
 
   public Router(String page) {
@@ -26,7 +29,19 @@ public class Router {
     this.page = page;
   }
 
-  public void setRedirect(Type type) {
+  public Type getType() {
+    return type;
+  }
+
+  public void setRedirect() {
     this.type = Type.REDIRECT;
+  }
+
+  public void setForward() {
+    this.type = Type.FORWARD;
+  }
+
+  public void setType(Type type) {
+    this.type = type;
   }
 }

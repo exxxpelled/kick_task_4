@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
+    <title>Register</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -30,50 +30,57 @@
             border: 1px solid #ccc; border-radius: 3px; font-size: 14px;
         }
         .form-group input:focus { outline: none; border-color: #1a1a2e; }
-        .btn-login {
-            width: 100%; padding: 9px;
-            background: #1a1a2e; color: #fff;
-            border: 1px solid #1a1a2e; border-radius: 3px;
-            font-size: 14px; cursor: pointer; margin-top: 6px;
+        .form-hint { font-size: 12px; color: #888; margin-top: 3px; }
+        .btn {
+            display: inline-block; padding: 8px 16px; font-size: 13px;
+            border: 1px solid transparent; border-radius: 3px; cursor: pointer;
+            text-decoration: none; background: none;
         }
-        .btn-login:hover { background: #2a2a4a; }
+        .btn-primary { background: #1a1a2e; color: #fff; border-color: #1a1a2e; width: 100%; }
+        .btn-primary:hover { background: #2a2a4a; }
         .alert {
             padding: 10px 14px; border-radius: 3px; margin-bottom: 16px; font-size: 13px;
             border: 1px solid transparent;
         }
         .alert-danger  { background: #fdedec; color: #c0392b; border-color: #f1948a; }
         .alert-success { background: #eafaf1; color: #1e8449; border-color: #a9dfbf; }
-        .register-link { margin-top: 16px; text-align: center; font-size: 13px; color: #555; }
-        .register-link a { color: #1a1a2e; }
+        .login-link { margin-top: 16px; text-align: center; font-size: 13px; color: #555; }
+        .login-link a { color: #1a1a2e; }
     </style>
 </head>
 <body>
 <div class="card">
-    <h2>Sign In</h2>
+    <h2>Create Account</h2>
 
-    <% String loginMsg   = (String) request.getAttribute("login_msg"); %>
+    <% String errorMsg   = (String) request.getAttribute("errorMsg"); %>
     <% String successMsg = (String) request.getAttribute("successMsg"); %>
+    <% String prefill    = (String) request.getAttribute("prefillLogin"); %>
 
-    <% if (loginMsg   != null) { %><div class="alert alert-danger"><%= loginMsg %></div><% } %>
+    <% if (errorMsg   != null) { %><div class="alert alert-danger"><%= errorMsg %></div><% } %>
     <% if (successMsg != null) { %><div class="alert alert-success"><%= successMsg %></div><% } %>
 
     <form action="${pageContext.request.contextPath}/controller" method="post">
-        <input type="hidden" name="command" value="login"/>
+        <input type="hidden" name="command" value="register"/>
 
         <div class="form-group">
             <label for="login">Login</label>
-            <input type="text" id="login" name="login" required autofocus/>
+            <input type="text" id="login" name="login"
+                   value="<%= prefill != null ? prefill : "" %>"
+                   minlength="3" maxlength="30" required autofocus/>
+            <span class="form-hint">3–30 characters, letters, digits, _ . -</span>
         </div>
         <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" required/>
+            <input type="password" id="password" name="password"
+                   minlength="4" maxlength="50" required/>
+            <span class="form-hint">Minimum 4 characters.</span>
         </div>
 
-        <button type="submit" class="btn-login">Sign In</button>
+        <button type="submit" class="btn btn-primary">Register</button>
     </form>
 
-    <div class="register-link">
-        No account? <a href="${pageContext.request.contextPath}/pages/auth/register.jsp">Register</a>
+    <div class="login-link">
+        Already have an account? <a href="${pageContext.request.contextPath}/pages/auth/login.jsp">Sign in</a>
     </div>
 </div>
 </body>

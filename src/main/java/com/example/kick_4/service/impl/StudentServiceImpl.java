@@ -24,14 +24,13 @@ public class StudentServiceImpl implements CommonService<Student>, StudentServic
 
   @Override
   public boolean insert(Student student) throws ServiceException {
-    if (student == null) throw new ServiceException("Student object cannot be null");
     if (student.getName() == null || student.getName().isBlank()) {
       throw new ServiceException("Student name cannot be empty");
     }
     if (student.getSurname() == null || student.getSurname().isBlank()) {
       throw new ServiceException("Student surname cannot be empty");
     }
-    if (student.getGroupId() <= 0) {
+    if (student.getGroupNumber() <= 0) {
       throw new ServiceException("Group ID must be positive");
     }
     try {
@@ -66,7 +65,7 @@ public class StudentServiceImpl implements CommonService<Student>, StudentServic
     if (student.getSurname() == null || student.getSurname().isBlank()) {
       throw new ServiceException("Student surname cannot be empty");
     }
-    if (student.getGroupId() <= 0) {
+    if (student.getGroupNumber() <= 0) {
       throw new ServiceException("Group ID must be positive");
     }
     try {
